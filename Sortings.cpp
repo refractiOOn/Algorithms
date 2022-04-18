@@ -1,23 +1,61 @@
-#include <iostream>
-#include <vector>
+#include "sortings.h"
+
 #include <functional>
+
+void MergeSort(std::vector<int>& vec)
+{
+	std::function<void(std::vector<int>&, int, int, int)> Merge = [&](std::vector<int>& vec, int startIdx, int midIdx, int endIdx)
+	{
+		int a = startIdx, b = midIdx + 1;
+		std::vector<int> temp;
+		while (a <= midIdx and b <= endIdx)
+		{
+			if (vec[a] < vec[b])
+			{
+				temp.push_back(vec[a]);
+				++a;
+			}
+			else
+			{
+				temp.push_back(vec[b]);
+				++b;
+			}
+		}
+		for (; a <= midIdx; ++a) temp.push_back(vec[a]);
+		for (; b <= endIdx; ++b) temp.push_back(vec[b]);
+
+		vec.insert(vec.cbegin() + startIdx, temp.begin(), temp.end());
+		vec.erase(vec.cbegin() + endIdx + 1, vec.cbegin() + endIdx + 1 + temp.size());
+	};
+	std::function<void(std::vector<int>&, int, int)> Sort = [&](std::vector<int>& vec, int startIdx, int endIdx)
+	{
+		if (startIdx == endIdx) return;
+
+		int midIdx = (startIdx + endIdx) / 2;
+
+		Sort(vec, startIdx, midIdx);
+		Sort(vec, midIdx + 1, endIdx);
+
+		Merge(vec, startIdx, midIdx, endIdx);
+	};
+
+	Sort(vec, 0, vec.size() - 1);
+}
 
 void QuickSort(std::vector<int>& vec)
 {
 	if (vec.size() < 2) return;
 
-	std::function<int(std::vector<int>&, int, int)> ChoosePivot = [&](std::vector<int>& vec, int startIndex, int endIndex)
+	std::function<int(std::vector<int>&, int, int)> ChoosePivot = [&](std::vector<int>& vec, int startIdx, int endIdx)
 	{
-		int midIndex = (startIndex + endIndex) / 2;
-		std::vector<int> temp = { startIndex, midIndex, endIndex };
-		int mean = (vec[startIndex] + vec[midIndex] + vec[endIndex]) / 3, median = midIndex;
-		int minDeviation = INT_MAX;
+		int midIdx = (startIdx + endIdx) / 2, mean = (vec[startIdx] + vec[midIdx] + vec[endIdx]) / 3, median = midIdx, minDev = abs(mean - vec[midIdx]);
+		int temp[] = { startIdx, endIdx };
 		for (auto el : temp)
 		{
-			int curDeviation = abs(mean - vec[el]);
-			if (curDeviation < minDeviation)
+			int curDev = abs(mean - vec[el]);
+			if (curDev < minDev)
 			{
-				minDeviation = curDeviation;
+				minDev = curDev;
 				median = el;
 			}
 		}
@@ -25,12 +63,11 @@ void QuickSort(std::vector<int>& vec)
 		return median;
 	};
 
-	std::function<void(std::vector<int>&, int, int)> Sort = [&](std::vector<int>& vec, int startIndex, int endIndex)
+	std::function<void(std::vector<int>&, int, int)> Sort = [&](std::vector<int>& vec, int startIdx, int endIdx)
 	{
 		int vecSize = vec.size();
 
-		int a = startIndex, b = endIndex, pivot = vec[ChoosePivot(vec, startIndex, endIndex)];
-		//int a = startIndex, b = endIndex, midIndex = (startIndex + endIndex) / 2, midValue = vec[midIndex];
+		int a = startIdx, b = endIdx, pivot = vec[ChoosePivot(vec, startIdx, endIdx)];
 
 		while (a <= b)
 		{
@@ -45,8 +82,8 @@ void QuickSort(std::vector<int>& vec)
 			}
 		}
 
-		if (a < endIndex) Sort(vec, a, endIndex);
-		if (b > startIndex) Sort(vec, startIndex, b);
+		if (a < endIdx) Sort(vec, a, endIdx);
+		if (b > startIdx) Sort(vec, startIdx, b);
 	};
 
 	Sort(vec, 0, vec.size() - 1);
@@ -55,20 +92,20 @@ void QuickSort(std::vector<int>& vec)
 void HeapSort(std::vector<int>& vec)
 {
 	int size = vec.size();
-	std::function<void(std::vector<int>&, int, int)> Heapify = [&](std::vector<int>& vec, int vecSize, int index)
+	std::function<void(std::vector<int>&, int, int)> Heapify = [&](std::vector<int>& vec, int vecSize, int idx)
 	{
-		int left = 2 * index + 1;
+		int left = 2 * idx + 1;
 		if (vecSize - 1 < left) return; // if no children (no left means no right too)
 
-		int right = 2 * index + 2, largest = index;
+		int right = 2 * idx + 2, largest = idx;
 
 		// detecting largest number
 		if (left < vecSize and vec[left] > vec[largest]) largest = left; // comparing left child with current largest
 		if (right < vecSize and vec[right] > vec[largest]) largest = right; // comparing right child with current largest
 
-		if (largest != index) // if root element is not largest
+		if (largest != idx) // if root element is not largest
 		{
-			std::swap(vec[index], vec[largest]); // swapping root element with his largest child
+			std::swap(vec[idx], vec[largest]); // swapping root element with his largest child
 			Heapify(vec, vecSize, largest); // sorting ex-largest child with it's new value
 		}
 	};
@@ -138,16 +175,4 @@ void BubbleSort(std::vector<int>& vec)
 			if (vec[b] > vec[b + 1]) std::swap(vec[b], vec[b + 1]);
 		}
 	}
-}
-
-int main()
-{
-	std::vector<int> vec{ 6, 7, 4, 5, 9, 1, 2, 8, 3, 11, 19, 25, 12, 10, 16 };
-	//BubbleSort(vec);
-	//ShakerSort(vec);
-	QuickSort(vec);
-	//InsertionSort(vec);
-	//SelectionSort(vec);
-	//HeapSort(vec);
-	for (auto el : vec) std::cout << el << std::endl;
 }
